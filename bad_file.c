@@ -67,19 +67,20 @@ int __init __attribute((optimize("O0")))my_init(void)
     // asm volatile("mfence");
     // buff[0] = 0x0;
     // asm volatile("mfence");
-    for(exp = 0; exp < 20000000; ++exp){
+    for(exp = 0; exp < 80000000; ++exp){
         msr = 0x187;
         // low = 0x4204A3 | (0x4<<24); // 0x420e01 | (0x1<<23) | (0x1<<24)
-        low = 0x4201A2; // RESOURCE_STALLS.ANY
+        // low = 0x4201A2; // RESOURCE_STALLS.ANY
         // low = 0x42010E | (0x1<<23) | (0x1<<24); // UOPS_ISSUED.STALL_CYCLES
-        // low = 0x4204A3 | (0x4<<24); // CYCLE_ACTIVITY.TOTAL_STALLS        high = 0x0;
+        low = 0x4204A3 | (0x4<<24); // CYCLE_ACTIVITY.TOTAL_STALLS        high = 0x0;
         wrmsr0(msr, 0, 0);
         wrmsr0(0xC2, 0, 0);
         wrmsr0(msr, low, high);    
         // asm volatile("mfence");
         // rd = rdmsr0(0x30a);
         asm volatile(
-            "\tmovq $0x30a, %%rcx\n"
+            "\tpush %%rax\n push %%rcx\n push %%rdx\n push %%rsi\n"
+            "\tmovq $0xC2, %%rcx\n"
             "\trdmsr\n"
             "\tmfence\n"
             "\tmovl %%eax,%0\n"
@@ -87,20 +88,15 @@ int __init __attribute((optimize("O0")))my_init(void)
             "\tmovq $200, %%rsi\n"
             // "\tloop_begin:\n"
            HUNDRREP("\tmovl %%eax,%0\n" "\tsfence\n" 
+            "\tmovl %%edx, %1\n"
             // "\tsfence\n"
             "\tdecq %%rsi\n"
             "\tdecq %%rsi\n"
             "\tdecq %%rsi\n"
             "\tdecq %%rsi\n"
             "\tdecq %%rsi\n"
-            "\tdecq %%rsi\n"
-            "\tdecq %%rsi\n"
-            "\tdecq %%rsi\n"
-            "\tdecq %%rsi\n"
-            "\tdecq %%rsi\n"
-            "\tdecq %%rsi\n"
-            "\tdecq %%rsi\n"
-            "\tmovl %%edx, %1\n"
+            // "\tmovl %1, %%edx\n"
+            
             )
             // "\tjnz loop_begin\n"
             "\tmfence\n"
@@ -108,6 +104,7 @@ int __init __attribute((optimize("O0")))my_init(void)
             "\trdmsr\n"
             "\tmovl %%eax, %2\n"
             "\tmovl %%edx, %3\n"
+            "\tpop %%rax\n pop %%rcx\n pop %%rdx\n pop %%rsi\n"
             :"=m"(lowb), "=m"(highb),
              "=m"(lowa), "=m"(higha)::"memory"
         );
@@ -126,7 +123,7 @@ int __init __attribute((optimize("O0")))my_init(void)
             // rd = 0;
         rd = lowb | (highb<<32);
         rd2 = lowa | (higha<<32);
-        if(minval > (rd2-rd)) minval = (uint64_t)rd2-(uint64_t)rd;
+        if(minval > (uint64_t)(rd2-rd)) minval = (uint64_t)rd2-(uint64_t)rd;
     }
         // msr;
         // msr;
