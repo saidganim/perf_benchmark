@@ -75,6 +75,7 @@ int __init __attribute((optimize("O0")))my_init(void)
 	// low = 0x4200A2; // EVENT E00A2
 	// low = 0x420104; // EVENT E0104
 	// low = 0x420704; // EVENT E0704
+    low = 0x42010E | (1<<23 /* INV */) | (1<<24 /* CMASK */);    // UOPS_ISSUED.STALL_CYCLES
 
 
         // low = 0x42010E | (0x1<<23) | (0x1<<24); // UOPS_ISSUED.STALL_CYCLES
