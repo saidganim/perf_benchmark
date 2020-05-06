@@ -67,7 +67,7 @@ int __init __attribute((optimize("O0")))my_init(void)
     // asm volatile("mfence");
     // buff[0] = 0x0;
     // asm volatile("mfence");
-    for(exp = 0; exp < 1; ++exp){
+    for(exp = 0; exp < 20; ++exp){
         msr = 0x187;
         // low = 0x4204A3 | (0x4<<24); // 0x420e01 | (0x1<<23) | (0x1<<24)
         low = 0x4201A2; // RESOURCE_STALLS.ANY
@@ -87,24 +87,41 @@ int __init __attribute((optimize("O0")))my_init(void)
         // asm volatile("mfence");
         // rd = rdmsr0(0x30a);
         asm volatile(
-            "\tmovq $0xC2, %%rcx\n"
+            "\tmovq $0x30a, %%rcx\n"
             "\trdmsr\n"
             "\tmfence\n"
             "\tmovl %%eax,%0\n"
             "\tmovl %%edx, %1\n"
             "\tmovq $50000000, %%rsi\n"
             "\tloop_begin:\n"
-            "\tsfence\n"
-	    "\tmovl %%esi, %4\n"
-	    "\tdecq %%rsi\n"
-	    "\tjnz loop_begin\n"
+        //    HUNDRREP(HUNDRREP(HUNDRREP(
+               "\tsfence\n"
+            //    "\tdecq %%rsi\n"
+            //    "\tdecq %%rsi\n"
+	           "\tmovq %5, %%rdi\n"
+	           "\tmovq %5, %%rdi\n"
+	           "\tmovq %5, %%rdi\n"
+	           "\tmovq %5, %%rdi\n"
+	           "\tmovq %5, %%rdi\n"
+	           "\tmovq %5, %%rdi\n"
+	           "\tmovq %5, %%rdi\n"
+               
+	           "\tmovq %%rdi, %5\n"
+               "\tlfence\n"
+	           "\tmovq %5, %%rdi\n"
+               "\tdecq %%rsi\n"
+
+            //    )) )
+	        // "\tmovq %%rsi, %5\n"
+	        // "\tmovq %%rsi, %5\n"
+	        "\tjnz loop_begin\n"
             "\tmfence\n"
-            "\tmovq $0xC2, %%rcx\n"
+            "\tmovq $0x30a, %%rcx\n"
             "\trdmsr\n"
             "\tmovl %%eax, %2\n"
             "\tmovl %%edx, %3\n"
             :"=m"(lowb), "=m"(highb),
-             "=m"(lowa), "=m"(higha), "=m"(x1)::"memory"
+             "=m"(lowa), "=m"(higha), "=m"(x1), "=m"(x2)::"memory"
         );
         // #pragma GCC unroll 5
         // for(i = 0; i < 50;){
